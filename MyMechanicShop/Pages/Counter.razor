@@ -1,0 +1,107 @@
+﻿@page "/productcatalog"
+
+@using MySqlConnector
+@inject MySqlConnection MySqlConnection
+
+<h3>Product Catalog</h3>
+
+<div style="display: flex; justify-content: space-between; align-items: center;">
+    <div>
+        <input style="width: 920px;" placeholder="Search by ID or Item Name" />
+        <button style="background-color: blue; color: white; width: 150px; margin-top: 20px; margin-bottom: 40px;">Search</button>
+    </div>
+</div>
+
+
+@if (products != null)
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Image</th>
+                <th>Item Name</th>
+                <th>Price</th>
+                <th>Inventory</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var product in products)
+            {
+                <tr>
+                    <td>@product.id</td>
+                    <td><img src="@product.imageURL" alt="Product Image" style="max-width: 50px; max-height: 50px;" /></td>
+                    <td>@product.itemName</td>
+                    <td>@string.Format("{0:C}", product.price)</td>
+                    <td>@product.inventory</td>
+                    <td style="color: @GetStatusColor(product.status)">@product.status</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+else
+{
+    <p>Loading...</p>
+}
+
+
+@code
+{
+    private List<Product> products;
+
+    protected override async Task OnInitializedAsync()
+    {
+        using (var connection = MySqlConnection)
+        {
+            await connection.OpenAsync();
+
+            var command = new MySqlCommand("SELECT * FROM products", connection);
+            using (var reader = await command.ExecuteReaderAsync())
+            {
+                if (reader.HasRows)
+                {
+                    products = new List<Product>();
+                    while (await reader.ReadAsync())
+                    {
+                        products.Add(new Product
+                            {
+                                id = reader.GetInt32(0),
+                                imageURL = reader.GetString(1),
+                                itemName = reader.GetString(2),
+                                price = reader.GetDecimal(3),
+                                inventory = reader.GetInt32(4),
+                                status = reader.GetString(5)
+                            });
+                    }
+                }
+            }
+        }
+    }
+
+    public class Product
+    {
+        public int id { get; set; }
+        public string imageURL { get; set; }
+        public string itemName { get; set; }
+        public decimal price { get; set; }
+        public int inventory { get; set; }
+        public string status { get; set; }
+    }
+
+    private string GetStatusColor(string status)
+    {
+        switch (status)
+        {
+            case "In Stock":
+                return "green";
+            case "Out Of Stock":
+                return "red";
+            case "Low Inventory":
+                return "orange";
+            default:
+                return "black";
+        }
+    }
+}
