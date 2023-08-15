@@ -1,0 +1,110 @@
+﻿@page "/productcatalog"
+@using MyMechanicShop.Data
+@using MySqlConnector
+@inject MySqlConnection MySqlConnection
+
+<h3>Product Catalog</h3>
+
+<div style="display: flex; justify-content: space-between; align-items: center;">
+    <div>
+        <input @bind="searchQuery" style="width: 920px;" placeholder="Search by Item Name" />
+        <button style="background-color: blue; color: white; width: 150px; margin-top: 20px; margin-bottom: 40px;" @onclick="Search">Search</button>
+    </div>
+</div>
+
+@if (products != null)
+{
+    @if (filteredProducts.Count > 0)
+    {
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Image</th>
+                    <th>Item Name</th>
+                    <th>Price</th>
+                    <th>Inventory</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var product in filteredProducts)
+                {
+                    <tr>
+                        <td>@product.id</td>
+                        <td><img src="@product.imageURL" alt="Product Image" style="max-width: 50px; max-height: 50px;" /></td>
+                        <td>@product.itemName</td>
+                        <td>@string.Format("{0:C}", product.price)</td>
+                        <td>@product.inventory</td>
+                        <td style="color: @GetStatusColor(product.status)">@product.status</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <p>No products found.</p>
+    }
+}
+else
+{
+    <p>Loading...</p>
+}
+
+@code {
+    private List<Product> products;
+    private List<Product> filteredProducts;
+    private string searchQuery = "";
+
+    private string GetStatusColor(string status)
+    {
+        switch (status)
+        {
+            case "In Stock":
+                return "green";
+            case "Out Of Stock":
+                return "red";
+            case "Low Inventory":
+                return "orange";
+            default:
+                return "black";
+        }
+    }
+
+    private async Task LoadProducts()
+    {
+        using (var connection = MySqlConnection)
+        {
+            var repository = new MySqlProductRepository(connection);
+            products = await repository.GetAllProductsAsync();
+            filteredProducts = new List<Product>(products);
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadProducts();
+    }
+
+    private void Search()
+    {
+        if (string.IsNullOrWhiteSpace(searchQuery))
+        {
+            filteredProducts = new List<Product>(products);
+        }
+        else
+        {
+            filteredProducts = products.Where(p =>
+                p.id.ToString().Contains(searchQuery) ||
+                p.itemName.Contains(searchQuery, StringComparison.OrdinalIgnoreCase)
+            ).ToList();
+        }
+    }
+
+    private void ClearSearch()
+    {
+        searchQuery = "";
+        filteredProducts = new List<Product>(products);
+    }
+}
