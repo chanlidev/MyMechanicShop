@@ -15,5 +15,6 @@ namespace MyMechanicShop.Data
         public string itemName { get; set; }
         public int quantity { get; set; }
         public string orderStatus { get; set; }
+        public string OriginalOrderStatus { get; set; }
     }
 }

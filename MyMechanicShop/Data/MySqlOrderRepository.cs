@@ -76,5 +76,36 @@ namespace MyMechanicShop.Data
 
             return orders;
         }
+
+        public async Task UpdateOrderStatusAsync(string orderId, string newOrderStatus)
+        {
+            await _connection.OpenAsync();
+
+            using var transaction = _connection.BeginTransaction();
+
+            try
+            {
+                // Update order status in the database
+                var query = "UPDATE orders SET orderStatus = @orderStatus WHERE orderId = @orderId";
+                var command = new MySqlCommand(query, _connection);
+                command.Parameters.AddWithValue("@orderStatus", newOrderStatus);
+                command.Parameters.AddWithValue("@orderId", orderId);
+                command.Transaction = transaction;
+
+                await command.ExecuteNonQueryAsync();
+
+                transaction.Commit();
+            }
+            catch (Exception ex)
+            {
+                transaction.Rollback();
+                throw new InvalidOperationException("Error updating order status.", ex);
+            }
+            finally
+            {
+                _connection.Close();
+            }
+        }
+
     }
 }

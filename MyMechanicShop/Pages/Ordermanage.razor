@@ -2,6 +2,7 @@
 @using MyMechanicShop.Data
 @using MySqlConnector
 @inject MySqlConnection MySqlConnection
+@inject MySqlOrderRepository Order
 
 <h3>Order Management</h3>
 
@@ -47,11 +48,24 @@
                         <td>@string.Format("{0:C}", order.orderTotal)</td>
                         <td>@order.itemName</td>
                         <td>@order.quantity</td>
-                        <td style="color: @GetorderStatusColor(order.orderStatus)">@order.orderStatus</td>
+                        <td>
+                            <select @bind="order.orderStatus">
+                                <option value="Shipped">Shipped</option>
+                                <option value="Canceled">Canceled</option>
+                                <option value="Not Yet Shipped">Not Yet Shipped</option>
+                            </select>
+                        </td>
                     </tr>
                 }
             </tbody>
         </table>
+        <div style="display: flex; justify-content: center; align-items: center; margin-top: 20px;">
+            <button style="background-color: blue; color: white; width: 150px;" @onclick="SaveChanges">Save</button>
+        </div>
+        @if (showSuccessMessage)
+        {
+            <p style="color: green; text-align: center; margin-top: 10px;">Successfully Updated!</p>
+        }
     }
     else
     {
@@ -69,22 +83,7 @@ else
     private List<Order> orders;
     private List<Order> filteredOrders;
     private string searchQuery = "";
-
-    private string GetorderStatusColor(string orderStatus)
-    {
-        switch (orderStatus)
-        {
-            case "Shipped":
-                return "green";
-            case "Canceled":
-                return "red";
-            case "Not Yet Shipped":
-                return "orange";
-            default:
-                return "black";
-        }
-    }
-
+    private bool showSuccessMessage = false;
 
     private async Task LoadOrders()
     {
@@ -121,4 +120,40 @@ else
         searchQuery = "";
         filteredOrders = new List<Order>(orders);
     }
+
+    private async Task SaveChanges()
+    {
+        using (var connection = MySqlConnection)
+        {
+            foreach (var order in filteredOrders)
+            {
+                if (order.orderStatus != order.OriginalOrderStatus) // Check if status changed
+                {
+                    if (!IsValidOrderStatus(order.orderStatus))
+                    {
+                        throw new InvalidOperationException("Invalid order status.");
+                    }
+
+                    await Order.UpdateOrderStatusAsync(order.orderId, order.orderStatus);
+                    order.OriginalOrderStatus = order.orderStatus; // Update the original status
+                }
+            }
+
+            // Refresh the order list to reflect the updated statuses
+            orders = await Order.GetAllOrdersAsync();
+
+            // Update the filtered orders list based on the refreshed orders list
+            filteredOrders = new List<Order>(orders);
+
+            // Show success message
+            showSuccessMessage = true;
+        }
+    }
+
+
+    private bool IsValidOrderStatus(string status)
+    {
+        return status == "Shipped" || status == "Canceled" || status == "Not Yet Shipped";
+    }
+
 }
