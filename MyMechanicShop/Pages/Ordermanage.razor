@@ -1,0 +1,124 @@
+﻿@page "/ordermanagement"
+@using MyMechanicShop.Data
+@using MySqlConnector
+@inject MySqlConnection MySqlConnection
+
+<h3>Order Management</h3>
+
+<div style="display: flex; justify-content: space-between; align-items: center;">
+    <div>
+        <input @bind="searchQuery" style="width: 920px;" placeholder="Search By Order ID Or Item Name" />
+        <button style="background-color: blue; color: white; width: 150px; margin-top: 20px; margin-bottom: 40px;" @onclick="Search">Search</button>
+    </div>
+</div>
+
+@if (orders != null)
+{
+    @if (filteredOrders.Count > 0)
+    {
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Order ID</th>
+                    <th>Order Date</th>
+                    <th>Ship Date</th>
+                    <th>Order Total</th>
+                    <th>Item Name</th>
+                    <th>Quantity</th>
+                    <th>Order Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var order in filteredOrders)
+                {
+                    <tr>
+                        <td>@order.orderId</td>
+                        <td>@order.orderDate.ToString("yyyy-MM-dd")</td>
+                        <td>
+                            @if (order.shipDate.HasValue)
+                            {
+                                @order.shipDate.Value.ToString("yyyy-MM-dd")
+                            }
+                            else
+                            {
+                                <span></span>
+                            }
+                        </td>
+                        <td>@string.Format("{0:C}", order.orderTotal)</td>
+                        <td>@order.itemName</td>
+                        <td>@order.quantity</td>
+                        <td style="color: @GetorderStatusColor(order.orderStatus)">@order.orderStatus</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <p>No orders found.</p>
+    }
+}
+else
+{
+    <p>Loading...</p>
+}
+
+
+@code 
+{
+    private List<Order> orders;
+    private List<Order> filteredOrders;
+    private string searchQuery = "";
+
+    private string GetorderStatusColor(string orderStatus)
+    {
+        switch (orderStatus)
+        {
+            case "Shipped":
+                return "green";
+            case "Canceled":
+                return "red";
+            case "Not Yet Shipped":
+                return "orange";
+            default:
+                return "black";
+        }
+    }
+
+
+    private async Task LoadOrders()
+    {
+        using (var connection = MySqlConnection)
+        {
+            var repository = new MySqlOrderRepository(connection);
+            orders = await repository.GetAllOrdersAsync();
+            filteredOrders = new List<Order>(orders);
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadOrders();
+    }
+
+    private void Search()
+    {
+        if (string.IsNullOrWhiteSpace(searchQuery))
+        {
+            filteredOrders = new List<Order>(orders);
+        }
+        else
+        {
+            filteredOrders = orders.Where(o =>
+                o.orderId.ToString().Contains(searchQuery) ||
+                o.itemName.Contains(searchQuery, StringComparison.OrdinalIgnoreCase)
+            ).ToList();
+        }
+    }
+
+    private void ClearSearch()
+    {
+        searchQuery = "";
+        filteredOrders = new List<Order>(orders);
+    }
+}
