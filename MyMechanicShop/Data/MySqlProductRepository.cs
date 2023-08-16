@@ -74,5 +74,63 @@ namespace MyMechanicShop.Data
 
             return products;
         }
+
+        public async Task UpdateProductInventoryAsync(int id, int newInventory)
+        {
+            await _connection.OpenAsync();
+
+            using var transaction = _connection.BeginTransaction();
+
+            try
+            {
+                var query = "UPDATE products SET inventory = @inventory WHERE id = @id";
+                var command = new MySqlCommand(query, _connection);
+                command.Parameters.AddWithValue("@inventory", newInventory);
+                command.Parameters.AddWithValue("@id", id);
+                command.Transaction = transaction;
+
+                await command.ExecuteNonQueryAsync();
+
+                transaction.Commit();
+            }
+            catch (Exception ex)
+            {
+                transaction.Rollback();
+                throw new InvalidOperationException("Error updating product inventory.", ex);
+            }
+            finally
+            {
+                _connection.Close();
+            }
+        }
+
+        public async Task UpdateProductStatusAsync(int id, string newStatus)
+        {
+            await _connection.OpenAsync();
+
+            using var transaction = _connection.BeginTransaction();
+
+            try
+            {
+                var query = "UPDATE products SET status = @status WHERE id = @id";
+                var command = new MySqlCommand(query, _connection);
+                command.Parameters.AddWithValue("@status", newStatus);
+                command.Parameters.AddWithValue("@id", id);
+                command.Transaction = transaction;
+
+                await command.ExecuteNonQueryAsync();
+
+                transaction.Commit();
+            }
+            catch (Exception ex)
+            {
+                transaction.Rollback();
+                throw new InvalidOperationException("Error updating product inventory.", ex);
+            }
+            finally
+            {
+                _connection.Close();
+            }
+        }
     }
 }

@@ -14,5 +14,6 @@ namespace MyMechanicShop.Data
         public decimal price { get; set; }
         public int inventory { get; set; }
         public string status { get; set; }
+        public int OriginalInventory { get; set; }
     }
 }

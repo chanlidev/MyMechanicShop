@@ -20,6 +20,7 @@ public static class MauiProgram
 		#if DEBUG
 		builder.Services.AddBlazorWebViewDeveloperTools();
 #endif
+        builder.Services.AddSingleton<MySqlProductRepository>();
         builder.Services.AddSingleton<MySqlOrderRepository>();
         var connectionString = "Server=localhost;Database=mechanicshop;Uid=root;Pwd=password;";
         builder.Services.AddTransient<MySqlConnection>(_ => new MySqlConnection(connectionString));

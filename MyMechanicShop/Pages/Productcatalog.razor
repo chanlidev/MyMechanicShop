@@ -2,6 +2,7 @@
 @using MyMechanicShop.Data
 @using MySqlConnector
 @inject MySqlConnection MySqlConnection
+@inject MySqlProductRepository Product
 
 <h3>Product Catalog</h3>
 
@@ -35,12 +36,25 @@
                         <td><img src="@product.imageURL" alt="Product Image" style="max-width: 50px; max-height: 50px;" /></td>
                         <td>@product.itemName</td>
                         <td>@string.Format("{0:C}", product.price)</td>
-                        <td>@product.inventory</td>
+                        <td>
+                            <input type="number" @bind="@product.inventory" style="width: 50px;" />
+                        </td>
                         <td style="color: @GetStatusColor(product.status)">@product.status</td>
                     </tr>
                 }
             </tbody>
         </table>
+        <div style="display: flex; justify-content: center; align-items: center; margin-top: 20px;">
+            <button style="background-color: blue; color: white; width: 150px;" @onclick="SaveChanges">Save</button>
+        </div>
+        @if (showSuccessMessage)
+        {
+            <p style="color: green; text-align: center; margin-top: 10px;">Successfully Updated!</p>
+        }
+        @if (showErrorMessage)
+        {
+            <p style="color: red; text-align: center; margin-top: 10px;">@errorMessage</p>
+        }
     }
     else
     {
@@ -56,6 +70,9 @@ else
     private List<Product> products;
     private List<Product> filteredProducts;
     private string searchQuery = "";
+    private bool showSuccessMessage = false;
+    private bool showErrorMessage = false;
+    private string errorMessage = "";
 
     private string GetStatusColor(string status)
     {
@@ -106,5 +123,58 @@ else
     {
         searchQuery = "";
         filteredProducts = new List<Product>(products);
+    }
+
+    private async Task SaveChanges()
+    {
+        using (var connection = MySqlConnection)
+        {
+            try
+            {
+                foreach (var product in filteredProducts)
+                {
+                    if (product.inventory != product.OriginalInventory) // Check if inventory changed
+                    {
+                        if (product.inventory < 0)
+                        {
+                            throw new InvalidOperationException("Inventory cannot be negative.");
+                        }
+
+                        await Product.UpdateProductInventoryAsync(product.id, product.inventory);
+
+                        if (product.inventory == 0)
+                        {
+                            product.status = "Out Of Stock";
+                        }
+                        else if (product.inventory < 10)
+                        {
+                            product.status = "Low Inventory";
+                        }
+                        else
+                        {
+                            product.status = "In Stock";
+                        }
+                        await Product.UpdateProductStatusAsync(product.id, product.status);
+
+                        product.OriginalInventory = product.inventory; // Update the original inventory
+                    }
+                }
+
+                // Refresh the order list to reflect the updated statuses
+                products = await Product.GetAllProductsAsync();
+
+                // Update the filtered orders list based on the refreshed orders list
+                filteredProducts = new List<Product>(products);
+
+                // Show success message
+                showSuccessMessage = true;
+            }
+            catch (InvalidOperationException ex)
+            {
+                // Handle the exception
+                showErrorMessage = true;
+                errorMessage = ex.Message;
+            }
+        }
     }
 }
