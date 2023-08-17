@@ -1,5 +1,86 @@
 ﻿@page "/"
 
-<h1>Welcome to MyMechanicShop</h1>
+<style>
+    /* Basic page styles */
+    .container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+    }
 
-Welcome to your new app.
+    /* Heading styles */
+    h1 {
+        text-align: center;
+        font-size: 24px;
+        margin-bottom: 20px;
+    }
+
+    h3 {
+        font-size: 20px;
+        margin-top: 30px;
+        margin-bottom: 10px;
+    }
+
+    /* Table styles */
+    .table {
+        border-collapse: collapse;
+        width: 100%;
+        margin-bottom: 30px;
+    }
+
+        .table th, .table td {
+            border: 1px solid #ccc;
+            padding: 10px;
+            text-align: center;
+        }
+
+        /* Table header styles */
+        .table th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+</style>
+
+<div class="container">
+    <h1>Welcome to My Mechanic Shop</h1>
+
+    <h3>Products</h3>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Total Products</th>
+                <th>Products Out of Stock</th>
+                <th>Products Running Low</th>
+                <th>Products In Stock</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>12</td>
+                <td>3</td>
+                <td>2</td>
+                <td>7</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h3>Orders</h3>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Total Orders</th>
+                <th>Unshipped Orders</th>
+                <th>Shipped Orders</th>
+                <th>Canceled Orders</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>8</td>
+                <td>2</td>
+                <td>4</td>
+                <td>2</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
