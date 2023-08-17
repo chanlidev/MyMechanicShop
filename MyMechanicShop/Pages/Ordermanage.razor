@@ -4,8 +4,11 @@
 @inject MySqlConnection MySqlConnection
 @inject MySqlOrderRepository Order
 
+
+<!-- Page Header -->
 <h3>Order Management</h3>
 
+<!-- Search Bar -->
 <div style="display: flex; justify-content: space-between; align-items: center;">
     <div>
         <input @bind="searchQuery" style="width: 920px;" placeholder="Search By Order ID Or Item Name" />
@@ -13,6 +16,7 @@
     </div>
 </div>
 
+<!-- Display Orders -->
 @if (orders != null)
 {
     @if (filteredOrders.Count > 0)
@@ -62,6 +66,8 @@
         <div style="display: flex; justify-content: center; align-items: center; margin-top: 20px;">
             <button style="background-color: blue; color: white; width: 150px;" @onclick="SaveChanges">Save</button>
         </div>
+
+        <!-- Show success message after save -->
         @if (showSuccessMessage)
         {
             <p style="color: green; text-align: center; margin-top: 10px;">Successfully Updated!</p>
@@ -85,6 +91,7 @@ else
     private string searchQuery = "";
     private bool showSuccessMessage = false;
 
+    // Load orders on page initialization
     private async Task LoadOrders()
     {
         using (var connection = MySqlConnection)
@@ -100,6 +107,7 @@ else
         await LoadOrders();
     }
 
+    // Search orders based on query
     private void Search()
     {
         if (string.IsNullOrWhiteSpace(searchQuery))
@@ -115,12 +123,14 @@ else
         }
     }
 
+    // Clear search and reset filtered orders
     private void ClearSearch()
     {
         searchQuery = "";
         filteredOrders = new List<Order>(orders);
     }
 
+    // Save changes to order statuses
     private async Task SaveChanges()
     {
         using (var connection = MySqlConnection)
@@ -150,7 +160,7 @@ else
         }
     }
 
-
+    // Check if an order status is valid
     private bool IsValidOrderStatus(string status)
     {
         return status == "Shipped" || status == "Canceled" || status == "Not Yet Shipped";

@@ -11,18 +11,20 @@ namespace MyMechanicShop.Data
     {
         private readonly MySqlConnection _connection;
 
+        // Constructor to initialize the repository with a database connection
         public MySqlOrderRepository(MySqlConnection connection)
         {
             _connection = connection;
         }
 
+        // Override method to fetch all orders from the database
         public override async Task<List<Order>> GetAllOrdersAsync()
         {
-            // Implement the logic to fetch all orders from the database
             await _connection.OpenAsync();
 
             var orders = new List<Order>();
 
+            // SQL query to retrieve all orders
             var query = "SELECT * FROM orders";
             var command = new MySqlCommand(query, _connection);
 
@@ -30,6 +32,7 @@ namespace MyMechanicShop.Data
             {
                 while (await reader.ReadAsync())
                 {
+                    // Create Order objects from database records
                     orders.Add(new Order
                     {
                         orderId = reader.GetString(0),
@@ -46,13 +49,14 @@ namespace MyMechanicShop.Data
             return orders;
         }
 
+        // Override method to search for orders in the database
         public override async Task<List<Order>> FindOrdersAsync(string searchQuery)
         {
-            // Implement the logic to search for orders in the database
             await _connection.OpenAsync();
 
             var orders = new List<Order>();
 
+            // SQL query to search for orders based on ID or item name
             var query = "SELECT * FROM orders WHERE orderId LIKE @query OR itemName LIKE @query";
             var command = new MySqlCommand(query, _connection);
             command.Parameters.AddWithValue("@query", "%" + searchQuery + "%");
@@ -61,6 +65,7 @@ namespace MyMechanicShop.Data
             {
                 while (await reader.ReadAsync())
                 {
+                    // Create Order objects from search results
                     orders.Add(new Order
                     {
                         orderId = reader.GetString(0),
@@ -77,6 +82,7 @@ namespace MyMechanicShop.Data
             return orders;
         }
 
+        // Method to update order status
         public async Task UpdateOrderStatusAsync(string orderId, string newOrderStatus)
         {
             await _connection.OpenAsync();

@@ -4,8 +4,10 @@
 @inject MySqlConnection MySqlConnection
 @inject MySqlProductRepository Product
 
+<!-- Page Header -->
 <h3>Product Catalog</h3>
 
+<!-- Search Bar -->
 <div style="display: flex; justify-content: space-between; align-items: center;">
     <div>
         <input @bind="searchQuery" style="width: 920px;" placeholder="Search by Item Name" />
@@ -13,6 +15,7 @@
     </div>
 </div>
 
+<!-- Display Products -->
 @if (products != null)
 {
     @if (filteredProducts.Count > 0)
@@ -47,10 +50,13 @@
         <div style="display: flex; justify-content: center; align-items: center; margin-top: 20px;">
             <button style="background-color: blue; color: white; width: 150px;" @onclick="SaveChanges">Save</button>
         </div>
+
+        <!-- Show success message after save -->
         @if (showSuccessMessage)
         {
             <p style="color: green; text-align: center; margin-top: 10px;">Successfully Updated!</p>
         }
+        <!-- Show error message if there is an error -->
         @if (showErrorMessage)
         {
             <p style="color: red; text-align: center; margin-top: 10px;">@errorMessage</p>
@@ -74,6 +80,7 @@ else
     private bool showErrorMessage = false;
     private string errorMessage = "";
 
+    // Get status color based on status string
     private string GetStatusColor(string status)
     {
         switch (status)
@@ -89,6 +96,7 @@ else
         }
     }
 
+    // Load products on page initialization
     private async Task LoadProducts()
     {
         using (var connection = MySqlConnection)
@@ -104,6 +112,7 @@ else
         await LoadProducts();
     }
 
+    // Search products based on query
     private void Search()
     {
         if (string.IsNullOrWhiteSpace(searchQuery))
@@ -119,12 +128,14 @@ else
         }
     }
 
+    // Clear search and reset filtered products
     private void ClearSearch()
     {
         searchQuery = "";
         filteredProducts = new List<Product>(products);
     }
 
+    // Save changes to product inventory and status
     private async Task SaveChanges()
     {
         using (var connection = MySqlConnection)
@@ -139,9 +150,10 @@ else
                         {
                             throw new InvalidOperationException("Inventory cannot be negative.");
                         }
-
+                        // Update product inventory in the database
                         await Product.UpdateProductInventoryAsync(product.id, product.inventory);
 
+                        // Update product status based on inventory
                         if (product.inventory == 0)
                         {
                             product.status = "Out Of Stock";
